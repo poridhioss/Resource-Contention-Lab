@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpu-hog-service
+  namespace: contention-lab
+  labels:
+    app: cpu-hog-service
+    version: limited
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cpu-hog-service
+  template:
+    metadata:
+      labels:
+        app: cpu-hog-service
+        version: limited
+    spec:
+      containers:
+        - name: hog
+          image: contention-lab/cpu-hog:latest
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: "100m"     # Small guaranteed CPU
+              memory: "64Mi"
+            limits:
+              cpu: "500m"     # CAPPED at 500m - can't starve other services!
+              memory: "128Mi"
+          env:
+            - name: INTENSITY
+              value: "medium"  # Reduced intensity
+          command: ["python", "hog.py", "--intensity", "medium"]

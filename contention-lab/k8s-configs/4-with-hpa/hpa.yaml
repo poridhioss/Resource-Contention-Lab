@@ -1,0 +1,32 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-service-hpa
+  namespace: contention-lab
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60  # Scale when CPU > 60%
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30  # Fast scale up
+      policies:
+      - type: Percent
+        value: 100  # Double the replicas
+        periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Slow scale down
+      policies:
+      - type: Percent
+        value: 50  # Half the replicas
+        periodSeconds: 60

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpu-hog-service
+  namespace: contention-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cpu-hog-service
+  template:
+    metadata:
+      labels:
+        app: cpu-hog-service
+        version: priority
+    spec:
+      priorityClassName: low-priority-batch  # Low priority - can be preempted
+      containers:
+        - name: hog
+          image: contention-lab/cpu-hog:latest
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "128Mi"
+          command: ["python", "hog.py", "--intensity", "medium"]

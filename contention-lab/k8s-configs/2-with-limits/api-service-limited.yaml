@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: contention-lab
+  labels:
+    app: api-service
+    version: limited
+spec:
+  replicas: 2  # Scale up for better availability
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+        version: limited
+    spec:
+      containers:
+        - name: api
+          image: contention-lab/api-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            requests:
+              cpu: "300m"     # Guaranteed CPU
+              memory: "128Mi"  # Guaranteed memory
+            limits:
+              cpu: "800m"     # Maximum CPU
+              memory: "256Mi"  # Maximum memory
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5

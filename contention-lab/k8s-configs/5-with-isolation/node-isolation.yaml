@@ -1,0 +1,107 @@
+# Instructions for node isolation:
+# 
+# 1. Taint a node for batch workloads:
+#    kubectl taint nodes <worker-node> workload=batch:NoSchedule
+#    kubectl label nodes <worker-node> node-type=batch-worker
+#
+# 2. Apply the deployments below
+#
+# 3. The API service will avoid tainted nodes
+# 4. The CPU hog will only run on tainted nodes
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: contention-lab
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+        version: isolated
+    spec:
+      priorityClassName: high-priority-api
+      # API service avoids batch nodes (no tolerations)
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-type
+                operator: NotIn
+                values: ["batch-worker"]
+      containers:
+        - name: api
+          image: contention-lab/api-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "128Mi"
+            limits:
+              cpu: "800m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpu-hog-service
+  namespace: contention-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cpu-hog-service
+  template:
+    metadata:
+      labels:
+        app: cpu-hog-service
+        version: isolated
+    spec:
+      priorityClassName: low-priority-batch
+      # CPU hog tolerates batch taint and prefers batch nodes
+      tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "batch"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: node-type
+                operator: In
+                values: ["batch-worker"]
+      containers:
+        - name: hog
+          image: contention-lab/cpu-hog:latest
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "1000m"  # Can use more CPU on dedicated node
+              memory: "256Mi"
+          command: ["python", "hog.py", "--intensity", "high"]

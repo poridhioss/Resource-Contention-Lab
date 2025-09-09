@@ -1,0 +1,45 @@
+### Health Check
+GET http://localhost:30080/health
+Accept: application/json
+
+###
+
+### CPU-bound Work (POST) - Low Complexity
+POST http://localhost:30080/work
+Content-Type: application/json
+Accept: application/json
+
+{
+  "delay_ms": 50,
+  "complexity": "low"
+}
+
+###
+
+### CPU-bound Work (POST) - High Complexity
+POST http://localhost:30080/work
+Content-Type: application/json
+Accept: application/json
+
+{
+  "delay_ms": 200,
+  "complexity": "high"
+}
+
+###
+
+### CPU-bound Work (GET) - Medium Complexity
+GET http://localhost:30080/work?delay_ms=100&complexity=medium
+Accept: application/json
+
+###
+
+### Stress Test - Medium Intensity (10 seconds)
+GET http://localhost:30080/stress?duration_seconds=10&intensity=medium
+Accept: application/json
+
+###
+
+### Stress Test - High Intensity (5 seconds)
+GET http://localhost:30080/stress?duration_seconds=5&intensity=high
+Accept: application/json

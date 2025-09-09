@@ -19,8 +19,7 @@ spec:
     spec:
       containers:
         - name: hog
-          image: contention-lab/cpu-hog:latest
-          imagePullPolicy: Never  # Use local image
+          image: konami98/cpu-hog-service:latest
           # NO resource requests/limits - this will consume all available CPU!
           env:
             - name: INTENSITY

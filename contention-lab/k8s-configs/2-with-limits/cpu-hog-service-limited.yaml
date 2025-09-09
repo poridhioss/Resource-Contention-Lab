@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: hog
-          image: contention-lab/cpu-hog:latest
+          image: konami98/cpu-hog-service:latest
           imagePullPolicy: Never
           resources:
             requests:

@@ -17,8 +17,7 @@ spec:
       priorityClassName: low-priority-batch  # Low priority - can be preempted
       containers:
         - name: hog
-          image: contention-lab/cpu-hog:latest
-          imagePullPolicy: Never
+          image: konami98/cpu-hog-service:latest
           resources:
             requests:
               cpu: "100m"
